@@ -3,11 +3,14 @@ package org.egx.clients.io;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder
 public class ScrapedStock {
     String reutersCode;
@@ -20,6 +23,5 @@ public class ScrapedStock {
     double lowest;
     double volume;
     double value;
-    String date;
-    String time;
+    Timestamp time;
 }

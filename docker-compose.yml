@@ -13,7 +13,20 @@ services:
     networks:
       - postgres
     restart: unless-stopped
-
+  timescaledb:
+    container_name: timescaledb
+    image: timescale/timescaledb:latest-pg15
+    environment:
+      POSTGRES_USER: zeyad
+      POSTGRES_PASSWORD: password
+      PGDATA: /data/postgres
+    volumes:
+      - timescaledb:/data/postgres
+    ports:
+      - "5433:5432"
+    networks:
+      - timescaledb
+    restart: unless-stopped
   pgadmin:
     container_name: pgadmin
     image: dpage/pgadmin4
@@ -27,6 +40,7 @@ services:
       - "5050:80"
     networks:
       - postgres
+      - timescaledb
     restart: unless-stopped
 
   keycloak:
@@ -66,11 +80,24 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-
+  mongo:
+    image: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: zeyad
+      MONGO_INITDB_ROOT_PASSWORD: password
+    ports:
+      - "8888:27017"
+    volumes:
+      - mongo-dev-volume:/data
 networks:
   postgres:
     driver: bridge
+  timescaledb:
+    driver: bridge
+
 volumes:
   postgres:
   pgadmin:
-
+  timescaledb:
+  mongo-dev-volume:

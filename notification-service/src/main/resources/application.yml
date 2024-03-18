@@ -1,0 +1,26 @@
+server:
+  port: 8400
+spring:
+  application:
+    name: notification-service
+  kafka:
+    bootstrap:
+      servers: https://localhost:9092
+  datasource:
+    url: jdbc:postgresql://localhost:5432/notifications
+    username: zeyad
+    password: password
+  jpa:
+    database: POSTGRESQL
+    show-sql : true
+    hibernate:
+      ddl-auto: create-drop
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/realms/EGX-AI
+eureka:
+  client:
+  serviceUrl:
+    defaultZone: http://localhost:8761/eureka
