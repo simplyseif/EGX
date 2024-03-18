@@ -16,6 +16,8 @@
         <module>news-service</module>
         <module>apigateway</module>
         <module>eurekaserver</module>
+        <module>notification-service</module>
+        <module>recommendation-service</module>
     </modules>
     <packaging>pom</packaging>
 
@@ -24,7 +26,8 @@
         <spring-cloud.version>2022.0.4</spring-cloud.version>
         <spring-boot.version>3.1.2</spring-boot.version>
         <spring.boot.maven.plugin.version>3.1.2</spring.boot.maven.plugin.version>
-        <image>zeyadahmedcs/EXG-AI/${project.artifactId}:${project.version}</image>
+        <image>${project.artifactId}:${project.version}</image>
+        <!--add this when pushing to docker <image>zeyadahmedcs/${project.artifactId}:${project.version}</image> -->
     </properties>
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -97,7 +100,7 @@
                         <execution>
                             <phase>package</phase>
                             <goals>
-                                <goal>build</goal>
+                                <goal>build</goal> <!--dockerBuild to build locally build to build and push-->
                             </goals>
                         </execution>
                     </executions>

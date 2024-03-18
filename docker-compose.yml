@@ -14,6 +14,37 @@ services:
       - postgres
     restart: unless-stopped
 
+  timescaledb:
+    container_name: timescaledb
+    image: timescale/timescaledb:latest-pg15
+    environment:
+      POSTGRES_USER: zeyad
+      POSTGRES_PASSWORD: password
+      PGDATA: /data/postgres
+    volumes:
+      - timescaledb:/data/postgres
+    ports:
+      - "5433:5432"
+    networks:
+      - timescaledb
+    restart: unless-stopped
+
+  pgvector:
+    container_name: pgvector
+    image: ankane/pgvector:v0.5.1
+    environment:
+      POSTGRES_USER: zeyad
+      POSTGRES_PASSWORD: password
+      PGDATA: /data/postgres
+    volumes:
+      - pgvectordb:/data/postgres
+    expose:
+      - "5432"
+    ports:
+      - "5434:5432"
+    networks:
+      - pgvector
+    restart: unless-stopped
   pgadmin:
     container_name: pgadmin
     image: dpage/pgadmin4
@@ -27,9 +58,12 @@ services:
       - "5050:80"
     networks:
       - postgres
+      - timescaledb
+      - pgvector
     restart: unless-stopped
 
   keycloak:
+    container_name: keycloak
     image: docker.io/bitnami/keycloak:22
     environment:
       KEYCLOAK_DATABASE_HOST: postgres
@@ -41,6 +75,7 @@ services:
       - "8080:8080"
     networks:
       - postgres
+      - spring
 
   zookeeper:
     image: wurstmeister/zookeeper:latest
@@ -50,27 +85,149 @@ services:
       ZOOKEEPER_TICK_TIME: 2000
     ports:
       - "2181:2181"
-
+    networks:
+      - spring
   kafka:
     image: wurstmeister/kafka:latest
-    container_name: kafka-analytical-pipeline
+    container_name: kafka
     depends_on:
       - zookeeper
     ports:
       - "9092:9092"
     environment:
       KAFKA_BROKER_ID: 1
-      KAFKA_ADVERTISED_HOST_NAME: localhost
+      KAFKA_ADVERTISED_HOST_NAME: kafka
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - spring
+#configuration to EGX-AI services
+  eureka:
+    image: zeyadahmedcs/eurekaserver:latest
+    container_name: eurekaserver
+    ports:
+      - "8761:8761"
+    networks:
+      - spring
+
+  apigateway:
+    image: zeyadahmedcs/apigateway:latest
+    container_name: apigateway
+    ports:
+      - "8083:8083"
+    networks:
+      - spring
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      - eureka
+
+  scraping-service:
+    image: zeyadahmedcs/scraping-service:latest
+    container_name: scraping-service
+    ports:
+      - "8000:8000"
+    networks:
+      - spring
+      - postgres
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      - eureka
+      - postgres
+      - kafka
+
+  stocks-service:
+    image: zeyadahmedcs/stocks-service:latest
+    container_name: stocks-service
+    ports:
+      - "8100:8100"
+    networks:
+      - spring
+      - timescaledb
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      - eureka
+      - timescaledb
+      - kafka
+
+  auth-service:
+    image: zeyadahmedcs/auth-service:latest
+    container_name: auth-service
+    ports:
+      - "8200:8200"
+    networks:
+      - spring
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      - keycloak
+      - eureka
+
+  news-service:
+    image: zeyadahmedcs/news-service:latest
+    container_name: news-service
+    ports:
+      - "8300:8300"
+    networks:
+      - spring
+      - postgres
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      - keycloak
+      - eureka
+      - postgres
+      - kafka
+
+  notification-service:
+    image: zeyadahmedcs/notification-service:latest
+    container_name: notification-service
+    ports:
+      - "8400:8400"
+    networks:
+      - spring
+      - postgres
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      - keycloak
+      - eureka
+      - postgres
+      - kafka
+
+  recommendation-service:
+    image: zeyadahmedcs/recommendation-service:latest
+    container_name: recommendation-service
+    ports:
+      - "8500:8500"
+    networks:
+      - spring
+      - pgvector
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      - keycloak
+      - eureka
+      - pgvector
+      - kafka
 
 networks:
   postgres:
     driver: bridge
+  timescaledb:
+    driver: bridge
+  pgvector:
+    driver: bridge
+  spring:
+    driver: bridge
+
 volumes:
   postgres:
   pgadmin:
-
+  timescaledb:
+  pgvectordb:

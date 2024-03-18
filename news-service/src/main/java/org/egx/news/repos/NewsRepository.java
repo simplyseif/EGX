@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
+
 public interface NewsRepository extends JpaRepository<News, Integer> {
 
     String appliedFiltersQuery = "SELECT n.* FROM news n" +
@@ -14,12 +16,13 @@ public interface NewsRepository extends JpaRepository<News, Integer> {
             " WHERE LOWER(e.sector) LIKE CONCAT('%',LOWER(:categoryParam),'%')" +
             " and LOWER(e.name) LIKE CONCAT('%',LOWER(:nameParam),'%')" +
             " and LOWER(e.reuters_code) LIKE CONCAT('%',LOWER(:codeParam),'%')" +
-            " ORDER BY n.news_date DESC, n.news_time DESC;";
+            " ORDER BY n.time DESC;";
+
+    String listIdQuery = "SELECT n.* from news n where n.id (:idListParam);";
     @Query(value = appliedFiltersQuery, nativeQuery = true)
     Page<News> findAllByFilters(@Param("categoryParam") String equityCategoryFilter,
                                           @Param("nameParam")String equityNameFilter,
                                           @Param("codeParam")String equityReutersFilter, Pageable pageable);
 
-//    @Query(value = appliedFiltersQuery, nativeQuery = true)
-//    List<News> findAllByFilters(String equityCategoryFilter, String equityNameFilter, String equityReutersFilter);
+    Page<News> findByIdIn(List<Integer> idsList, Pageable pageable);
 }
